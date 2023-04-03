@@ -3,7 +3,9 @@ module.exports = {
   parserOptions: {
     sourceType: 'module',
   },
-
+  "globals": {
+    "Compartment": "readonly"
+  },
   extends: ['@metamask/eslint-config'],
 
   overrides: [

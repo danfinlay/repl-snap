@@ -5,6 +5,7 @@ import {
   connectSnap,
   getSnap,
   sendHello,
+  requestPermissions,
   shouldDisplayReconnectButton,
 } from '../utils';
 import {
@@ -28,6 +29,40 @@ const Container = styled.div`
     margin-top: 2rem;
     margin-bottom: 2rem;
     width: auto;
+  }
+`;
+
+const Repl = styled.div`
+  .container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  .console {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    color: #a9b7c6;
+    font-size: 16px;
+  }
+
+  .input {
+    padding: 10px;
+    width: 100%;
+    border: none;
+    border-top: 1px solid #a9b7c6;
+    background-color: #282828;
+    color: #a9b7c6;
+    font-size: 16px;
+  }
+
+  .input::placeholder {
+    color: #7e8a97;
+  }
+
+  .input:focus {
+    outline: none;
   }
 `;
 
@@ -117,6 +152,15 @@ const Index = () => {
     }
   };
 
+  const handlePermissionsRequestClick = async () => {
+    try {
+      await requestPermissions();
+    } catch (e) {
+      console.error(e);
+      dispatch({ type: MetamaskActions.SetError, payload: e });
+    }
+  };
+
   const handleSendHelloClick = async () => {
     try {
       await sendHello();
@@ -185,12 +229,12 @@ const Index = () => {
         )}
         <Card
           content={{
-            title: 'Send Hello message',
+            title: 'Request Permissions',
             description:
-              'Display a custom message within a confirmation screen in MetaMask.',
+              'Requests the permission to evaluate code within the snap from the snap.',
             button: (
               <SendHelloButton
-                onClick={handleSendHelloClick}
+                onClick={handlePermissionsRequestClick}
                 disabled={!state.installedSnap}
               />
             ),
@@ -202,6 +246,16 @@ const Index = () => {
             !shouldDisplayReconnectButton(state.installedSnap)
           }
         />
+        {state.installedSnap && (
+          <Repl>
+            <div className="console" id="console"></div>
+            <input
+              className="input"
+              id="input"
+              placeholder="Type your command here..."
+            ></input>
+          </Repl>
+        )}
         <Notice>
           <p>
             Please note that the <b>snap.manifest.json</b> and{' '}
