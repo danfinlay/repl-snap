@@ -65,6 +65,27 @@ const CardContainer = styled.div`
   margin-top: 1.5rem;
 `;
 
+const TerminalContainer = styled.div`
+display: flex;
+width: 100%; /* set the width of the parent element */
+
+& > * {
+  background-color: rgb(51, 51, 51);
+  border-radius: 4px;
+  box-shadow: rgba(0, 0, 0, 0.5) 0px 2px 2px 0px;
+  color: rgb(255, 255, 255);
+  font-family: monospace;
+  font-size: 16px;
+  font-weight: 700;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  transition: background-color 0.1s linear;
+  
+  /* Add this to make the terminal take the full width of its parent */
+  flex-grow: 1;
+}
+`
+
 const Notice = styled.div`
   background-color: ${({ theme }) => theme.colors.background.alternative};
   border: 1px solid ${({ theme }) => theme.colors.border.default};
@@ -213,43 +234,46 @@ const Index = () => {
           }
         />
         {state.installedSnap && (
-          <ReactReplView
-            title="Snap REPL"
-            height={300}
-            initiallyExecute={['a = 3', 'b = 4', 'a * b']}
-            lines={lines}
-            onSubmit={(code: string) => {
-              setLines((prevLines) => [
-                ...prevLines,
-                {
-                  type: 'input',
-                  value: code,
-                },
-              ]);
-            
-              evaluate(code)
-                .then((result) => {
-                  setLines((prevLines) => [
-                    ...prevLines,
-                    {
-                      type: 'output',
-                      value: result,
-                    },
-                  ]);
-                })
-                .catch((e) => {
-                  setLines((prevLines) => [
-                    ...prevLines,
-                    {
-                      type: 'output',
-                      value: `Error: ${e.message}`,
-                    },
-                  ]);
-                  console.error(e);
-                  return e.message;
-                });
-            }}
-          />
+          <TerminalContainer>
+            <ReactReplView
+              title="Snap REPL"
+              width="100%"
+              height={300}
+              initiallyExecute={['a = 3', 'b = 4', 'a * b']}
+              lines={lines}
+              onSubmit={(code: string) => {
+                setLines((prevLines) => [
+                  ...prevLines,
+                  {
+                    type: 'input',
+                    value: code,
+                  },
+                ]);
+              
+                evaluate(code)
+                  .then((result) => {
+                    setLines((prevLines) => [
+                      ...prevLines,
+                      {
+                        type: 'output',
+                        value: result,
+                      },
+                    ]);
+                  })
+                  .catch((e) => {
+                    setLines((prevLines) => [
+                      ...prevLines,
+                      {
+                        type: 'output',
+                        value: `Error: ${e.message}`,
+                      },
+                    ]);
+                    console.error(e);
+                    return e.message;
+                  });
+              }}
+            />
+          </TerminalContainer>
         )}
         <Notice>
           <p>

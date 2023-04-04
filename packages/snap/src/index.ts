@@ -4,21 +4,71 @@ import { panel, text } from '@metamask/snaps-ui';
 const compartment = new Compartment({
   snap,
   Reflect,
+  Object,
 });
 
-const permittedDomains = new Set();
+/**
+ * Persists the snap state
+ * @param newState - The new state to persist
+ */
+async function updateState (newState: Record<string, unknown>) {
+  await snap.request({
+    method: 'snap_manageState',
+    params: { operation: 'update', newState },
+  });
+}
 
-const warning = panel([
-  text(
-    `The domain at **${origin}** would like unmitigated access to your wallet.`,
-  ),
-  text(
-    `You should only grant this if it's a site you trust with your entire wallet. Probably only do this if you're a developer and have read the source code of the site you're connecting to.`,
-  ),
-  text(
-    `Oh, or if you're using a test wallet! Use a test wallet for development. That's a great idea anyways.`,
-  ),
-])
+/**
+ * Retrieves the snap state
+ * @returns The snap state
+ */
+async function getState () {
+  return await snap.request({
+    method: 'snap_manageState',
+    params: { operation: 'get' },
+  });
+}
+
+/**
+ * Retrieves the permitted domains
+ * 
+ * @returns The permitted domains
+ */
+async function getPermittedDomains(): Promise<string[]> {
+  const state = await getState();
+  if (
+    state &&
+    'permittedDomains' in state &&
+    Array.isArray(state.permittedDomains)
+  ) {
+    return state.permittedDomains;
+  }
+
+  return [];
+}
+
+/**
+ * Adds a domain to the permitted domains
+ * 
+ * @param domain - The domain to add to the permitted domains
+ */
+async function setPermittedDomain(domain: string) {
+  const permittedDomains = await getPermittedDomains();
+  permittedDomains.push(domain);
+  await updateState({ permittedDomains });
+}
+
+/**
+ * Checks if a given domain is permitted.
+ * 
+ * @param domain - The domain to check
+ * @returns boolean - Whether the domain is permitted
+ */
+async function checkPermittedDomain(domain: string) {
+  const permittedDomains = await getPermittedDomains();
+  return permittedDomains.includes(domain);
+}
+
 
 /**
  * Handle incoming JSON-RPC requests, sent through `wallet_invokeSnap`.
@@ -37,6 +87,17 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 }) => {
   let approved;
   const { params } = request;
+  const warning = panel([
+    text(
+      `The domain at **${origin}** would like unmitigated access to your wallet.`,
+    ),
+    text(
+      `You should only grant this if it's a site you trust with your entire wallet. Probably only do this if you're a developer and have read the source code of the site you're connecting to.`,
+    ),
+    text(
+      `Oh, or if you're using a test wallet! Use a test wallet for development. That's a great idea anyways.`,
+    ),
+  ]);
   const code = params && Array.isArray(params) && params[0];
   switch (request.method) {
     case 'requestPermissions':
@@ -49,12 +110,13 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       });
 
       if (approved) {
-        permittedDomains.add(origin);
+        await setPermittedDomain(origin);
         return true;
       }
       return false;
     case 'evaluate':
-      if (!permittedDomains.has(origin)) {
+      approved = await checkPermittedDomain(origin);
+      if (!approved) {
         throw new Error('Origin not permitted to evaluate code.');
       }
 
