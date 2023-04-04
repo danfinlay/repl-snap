@@ -3,6 +3,7 @@ import { panel, text } from '@metamask/snaps-ui';
 
 const compartment = new Compartment({
   snap,
+  Reflect,
 });
 
 const permittedDomains = new Set();

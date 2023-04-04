@@ -1,11 +1,13 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import styled from 'styled-components';
+import { ReactReplView } from 'awesome-react-repl';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
 import {
   connectSnap,
   getSnap,
   sendHello,
   requestPermissions,
+  evaluate,
   shouldDisplayReconnectButton,
 } from '../utils';
 import {
@@ -29,40 +31,6 @@ const Container = styled.div`
     margin-top: 2rem;
     margin-bottom: 2rem;
     width: auto;
-  }
-`;
-
-const Repl = styled.div`
-  .container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-  }
-
-  .console {
-    flex-grow: 1;
-    padding: 20px;
-    overflow-y: auto;
-    color: #a9b7c6;
-    font-size: 16px;
-  }
-
-  .input {
-    padding: 10px;
-    width: 100%;
-    border: none;
-    border-top: 1px solid #a9b7c6;
-    background-color: #282828;
-    color: #a9b7c6;
-    font-size: 16px;
-  }
-
-  .input::placeholder {
-    color: #7e8a97;
-  }
-
-  .input:focus {
-    outline: none;
   }
 `;
 
@@ -134,8 +102,15 @@ const ErrorMessage = styled.div`
   }
 `;
 
+type Line = {
+  type: 'input' | 'output';
+  value: string;
+};
+type Lines = Line[];
+
 const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
+  const [lines, setLines] = useState<Lines>([]);
 
   const handleConnectClick = async () => {
     try {
@@ -161,19 +136,10 @@ const Index = () => {
     }
   };
 
-  const handleSendHelloClick = async () => {
-    try {
-      await sendHello();
-    } catch (e) {
-      console.error(e);
-      dispatch({ type: MetamaskActions.SetError, payload: e });
-    }
-  };
-
   return (
     <Container>
       <Heading>
-        Welcome to <Span>template-snap</Span>
+        Welcome to <Span>REPL Snap</Span>
       </Heading>
       <Subtitle>
         Get started by editing <code>src/index.ts</code>
@@ -247,14 +213,43 @@ const Index = () => {
           }
         />
         {state.installedSnap && (
-          <Repl>
-            <div className="console" id="console"></div>
-            <input
-              className="input"
-              id="input"
-              placeholder="Type your command here..."
-            ></input>
-          </Repl>
+          <ReactReplView
+            title="Snap REPL"
+            height={300}
+            initiallyExecute={['a = 3', 'b = 4', 'a * b']}
+            lines={lines}
+            onSubmit={(code: string) => {
+              setLines((prevLines) => [
+                ...prevLines,
+                {
+                  type: 'input',
+                  value: code,
+                },
+              ]);
+            
+              evaluate(code)
+                .then((result) => {
+                  setLines((prevLines) => [
+                    ...prevLines,
+                    {
+                      type: 'output',
+                      value: result,
+                    },
+                  ]);
+                })
+                .catch((e) => {
+                  setLines((prevLines) => [
+                    ...prevLines,
+                    {
+                      type: 'output',
+                      value: `Error: ${e.message}`,
+                    },
+                  ]);
+                  console.error(e);
+                  return e.message;
+                });
+            }}
+          />
         )}
         <Notice>
           <p>

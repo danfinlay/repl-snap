@@ -51,7 +51,24 @@ export const getSnap = async (version?: string): Promise<Snap | undefined> => {
 };
 
 /**
- * Invoke the "hello" method from the example snap.
+ * Invoke the "evaluate" method from the REPL snap.
+ */
+
+export const evaluate = async (code: string) => {
+  return window.ethereum.request({
+    method: 'wallet_invokeSnap',
+    params: {
+      snapId: defaultSnapOrigin,
+      request: {
+        method: 'evaluate',
+        params: [code],
+      },
+    },
+  });
+};
+
+/**
+ * Invoke the "requestPermissions" method from the REPL snap.
  */
 
 export const requestPermissions = async () => {

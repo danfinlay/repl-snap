@@ -1,6 +1,6 @@
-# @metamask/template-snap-monorepo
+# REPL Snap 
 
-This repository demonstrates how to develop a snap with TypeScript. For detailed instructions, see [the MetaMask documentation](https://docs.metamask.io/guide/snaps.html#serving-a-snap-to-your-local-environment).
+A MetaMask Snap for exposing a REPL to the Snaps internal system, allowing for developer experimentation with it in real time.
 
 MetaMask Snaps is a system that allows anyone to safely expand the capabilities of MetaMask. A _snap_ is a program that we run in an isolated environment that can customize the wallet experience.
 
